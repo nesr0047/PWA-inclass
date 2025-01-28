@@ -1,0 +1,65 @@
+:root {
+  --blue: hsl(240, 50%, 50%);
+  --white: hsla(0, 0%, 100%, 0.8);
+}
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  padding: 0;
+  margin: 0;
+  font-family: Montserrat, sans-serif;
+}
+header {
+  background-color: var(--blue);
+  color: var(--white);
+  padding: 1rem 2rem;
+  margin: 0;
+  h1,
+  span.material-symbols-outlined {
+    color: var(--white);
+    font-size: 4rem;
+  }
+}
+nav {
+  margin: 1rem 2rem;
+  a {
+    /* TODO: */
+  }
+}
+form {
+  margin: 1rem 2rem;
+
+  label {
+    font-size: 1.5rem;
+    margin-inline-end: 1.5rem;
+    padding: 0.5rem 2rem;
+  }
+  select {
+    font-size: 1.5rem;
+    margin-inline-end: 1.5rem;
+    padding: 0.5rem 2rem;
+  }
+  option {
+    font-size: 1.5rem;
+  }
+  button {
+    background-color: var(--blue);
+    color: var(--white);
+    border: none;
+    padding: 0.5rem 2rem;
+    font-size: 1.5rem;
+  }
+}
+
+.card {
+  width: 300px;
+  padding: 2rem;
+  margin: 2rem;
+  border: 1px solid var(--blue);
+  img {
+    width: 90%;
+    margin-inline: auto;
+  }
+}

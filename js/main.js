@@ -59,9 +59,11 @@ function doAdopt(ev) {
     let img = card.querySelector('img');
     let src = img.src;
     let name = img.alt;
+    let breed = img.getAttribute('data-breed');
+
     let msg = {
       action: 'adopt',
-      dog: { src, name },
+      dog: { src, name, breed },
     };
     sendMessage(msg);
   }
@@ -94,17 +96,23 @@ function doSearch(ev) {
       console.log(names);
       document.querySelector('main').innerHTML = '';
       for (let i = 0; i < images.message.length; i++) {
+        let u = new URL(images.message[i]);
+        let parts = u.pathname.split('/');
+        //Eg: ['', 'breeds', 'greyhound-indian', 'rampur-greyhound.jpg']
+        let brd = parts[2];
+
         let div = document.createElement('div');
         div.className = 'card';
         let p1 = document.createElement('p');
         div.append(p1);
         let img = document.createElement('img');
         img.src = images.message[i];
-        img.alt = names.results[i]?.name.first;
+        img.alt = `${names.results[i]?.name.first} (${brd})`;
+        img.setAttribute('data-breed', brd);
         p1.append(img);
         let p2 = document.createElement('p');
         div.append(p2);
-        p2.textContent = names.results[i]?.name.first;
+        p2.textContent = `${names.results[i]?.name.first} (${brd})`;
         let p3 = document.createElement('p');
         div.append(p3);
         let btn = document.createElement('button');

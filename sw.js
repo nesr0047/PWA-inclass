@@ -5,8 +5,19 @@ const adoptCache = 'adoptedDogs_' + version;
 
 const appFiles = ['/', '/index.html', '/adopt.html', '/css/main.css', '/js/main.js'];
 
-self.addEventListener('install', (ev) => {}); //Homework
-self.addEventListener('activate', (ev) => {}); //Homework
+self.addEventListener('install', (ev) => {
+  ev.waitUntil(
+    caches.open(appCache).then((cache) => {
+      cache.addAll(appFiles);
+    })
+  );
+}); //Homework
+self.addEventListener('activate', (ev) => {
+  caches.keys().then((cacheList) => {
+    //filter out the ones that DO match the current cache names
+    return Promise.all(cacheList.filter((cache) => ![appCache, imgCache, adoptCache].includes(cache)).map((cache) => caches.delete(cache)));
+  });
+}); //Homework
 self.addEventListener('fetch', (ev) => {});
 self.addEventListener('message', (ev) => {
   if ('action' in ev.data && ev.data.action == 'adopt') {

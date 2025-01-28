@@ -80,7 +80,7 @@ function doSearch(ev) {
     //specific breed
     url += `breed/${breed}/images/random/3`;
   }
-  let nameURL = nameBaseURL + '?results=3'; //url for dog names
+  let nameURL = nameBaseURL + '?results=3&nat=gb,au,ca'; //url for dog names
   Promise.all([fetch(url), fetch(nameURL)])
     .then((respArr) => {
       if (!respArr[0].ok) throw new Error('No dogs to be found');

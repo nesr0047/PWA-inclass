@@ -2,6 +2,7 @@
   --blue: hsl(240, 50%, 50%);
   --white: hsla(0, 0%, 100%, 0.8);
   --lightblue: hsl(240, 50%, 80%);
+  --green: hsl(90, 50%, 40%);
 }
 * {
   box-sizing: border-box;
@@ -18,8 +19,8 @@ header {
   color: var(--white);
   padding: 1rem 2rem;
   margin: 0;
-  h1,
-  span.material-symbols-outlined {
+  & h1,
+  & span.material-symbols-outlined {
     color: var(--white);
     font-size: 4rem;
   }
@@ -28,7 +29,7 @@ nav {
   padding: 1rem 2rem;
   background-color: var(--lightblue);
 
-  a {
+  & a {
     /* TODO: */
     color: var(--blue);
     font-size: 1.5rem;
@@ -44,20 +45,21 @@ nav {
 form {
   margin: 1rem 2rem;
 
-  label {
+  & label {
     font-size: 1.5rem;
     margin-inline-end: 1.5rem;
     padding: 0.5rem 2rem;
   }
-  select {
+  & select {
+    /* & ampersand */
     font-size: 1.5rem;
     margin-inline-end: 1.5rem;
     padding: 0.5rem 2rem;
   }
-  option {
+  & option {
     font-size: 1.5rem;
   }
-  button {
+  & button {
     background-color: var(--blue);
     color: var(--white);
     border: none;
@@ -68,6 +70,7 @@ form {
 main {
   padding: 2rem;
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
   gap: 1rem;
 }
@@ -82,16 +85,16 @@ main {
   &:hover {
     box-shadow: 0px 0px 4px var(--lightblue);
   }
-  img {
+  & img {
     max-width: 100%;
     object-fit: contain;
   }
-  p {
+  & p {
     margin: 0;
     font-size: 1.5rem;
     text-align: center;
   }
-  button {
+  & button {
     background-color: var(--blue);
     color: var(--white);
     border: none;
@@ -99,5 +102,13 @@ main {
     padding: 0.5rem 2rem;
     font-size: 1.5rem;
     cursor: pointer;
+
+    &.adopted {
+      background-color: var(--green);
+      cursor: not-allowed;
+    }
+    &:disabled {
+      cursor: not-allowed;
+    }
   }
 }

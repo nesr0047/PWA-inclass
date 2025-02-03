@@ -6,7 +6,6 @@ function init() {
   setUpWorker();
   addListeners();
   pageSpecific();
-  getBreeds();
 }
 
 function getBreeds() {
@@ -41,14 +40,8 @@ function addListeners() {
   //for all pages
   //service worker messages
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.ready.then((reg) => {
-      reg.active.addEventListener('message', gotMessage);
-    });
+    navigator.serviceWorker.addEventListener('message', gotMessage);
   }
-  //form submit
-  document.querySelector('form').addEventListener('submit', doSearch);
-  //adopt buttons
-  document.querySelector('main').addEventListener('click', doAdopt);
 }
 
 function doAdopt(ev) {
@@ -60,10 +53,11 @@ function doAdopt(ev) {
     let src = img.src;
     let name = img.alt;
     let breed = img.getAttribute('data-breed');
+    let uuid = target.getAttribute('data-ref'); //our generated id
 
     let msg = {
       action: 'adopt',
-      dog: { src, name, breed },
+      dog: { uuid, src, name, breed },
     };
     sendMessage(msg);
   }
@@ -94,33 +88,22 @@ function doSearch(ev) {
       let names = dataArr[1];
       console.log(images);
       console.log(names);
-      document.querySelector('main').innerHTML = '';
+      let dogs = [];
       for (let i = 0; i < images.message.length; i++) {
         let u = new URL(images.message[i]);
         let parts = u.pathname.split('/');
         //Eg: ['', 'breeds', 'greyhound-indian', 'rampur-greyhound.jpg']
         let brd = parts[2];
 
-        let div = document.createElement('div');
-        div.className = 'card';
-        let p1 = document.createElement('p');
-        div.append(p1);
-        let img = document.createElement('img');
-        img.src = images.message[i];
-        img.alt = `${names.results[i]?.name.first} (${brd})`;
-        img.setAttribute('data-breed', brd);
-        p1.append(img);
-        let p2 = document.createElement('p');
-        div.append(p2);
-        p2.textContent = `${names.results[i]?.name.first} (${brd})`;
-        let p3 = document.createElement('p');
-        div.append(p3);
-        let btn = document.createElement('button');
-        btn.className = 'btnAdopt';
-        btn.innerHTML = '<span class="material-symbols-outlined">heart_plus</span> Adopt Now!';
-        p3.append(btn);
-        document.querySelector('main').append(div);
+        let dog = {
+          uuid: crypto.randomUUID(),
+          name: names.results[i]?.name?.first,
+          breed: brd,
+          src: u.href,
+        };
+        dogs.push(dog);
       }
+      buildCards(dogs, true);
     })
     .catch((err) => {
       console.warn(err.message);
@@ -130,6 +113,30 @@ function doSearch(ev) {
 
 function gotMessage(ev) {
   //got a message from the service worker
+  if ('action' in ev.data) {
+    if (ev.data.action == 'adoptedSuccess') {
+      //dog was saved in cache
+      console.log(ev.data.dog);
+      let uuid = ev.data.dog.uuid;
+      let btn = document.querySelector(`button[data-ref="${uuid}"]`);
+      btn.classList.add('adopted');
+      btn.addEventListener('click', (ev) => {
+        ev.stopImmediatePropagation(); //don't let the click go to the main element
+        ev.target.setAttribute('disabled', 'disabled');
+      });
+    }
+    if (ev.data.action === 'getAdoptedDogs') {
+      let dogs = ev.data.dogs;
+      console.log('list of dogs');
+      console.log(dogs);
+      buildCards(dogs);
+      displayNumDogs(dogs.length); //NEW
+    }
+  }
+}
+
+function displayNumDogs(numDogs) {
+  //NEW - tell the user about how many dogs they have adopted
 }
 
 function sendMessage(msg) {
@@ -145,17 +152,63 @@ function pageSpecific() {
   const id = document.body.id;
   switch (id) {
     case 'home':
+      getBreeds();
+      //form submit
+      document.querySelector('form').addEventListener('submit', doSearch);
+      //adopt buttons
+      document.querySelector('main').addEventListener('click', doAdopt);
       break;
     case 'adopt':
+      //get the list of adopted dogs
+      //send a message to the SW saying please give me all the adopted dog data as an array
+
+      getAdoptedDogs();
       break;
     default:
   }
+}
+
+function getAdoptedDogs() {
+  let msg = {
+    action: 'getAdoptedDogs',
+  };
+  sendMessage(msg);
 }
 
 function getData() {
   //fetch calls
 }
 
-function buildCard() {
-  //build a single card with a Dog pic and name
+function buildCards(dogs, withButtons = false) {
+  //build cards with a Dog pic and name
+  document.querySelector('main').innerHTML = '';
+  for (let i = 0; i < dogs.length; i++) {
+    let src = dogs[i].src;
+    let breed = dogs[i].breed;
+    let name = dogs[i].name;
+    let uuid = dogs[i].uuid;
+
+    let div = document.createElement('div');
+    div.className = 'card';
+    let p1 = document.createElement('p');
+    div.append(p1);
+    let img = document.createElement('img');
+    img.src = src;
+    img.alt = `${name} (${breed})`;
+    img.setAttribute('data-breed', breed);
+    p1.append(img);
+    let p2 = document.createElement('p');
+    div.append(p2);
+    p2.textContent = `${name} (${breed})`;
+    let p3 = document.createElement('p');
+    div.append(p3);
+    if (withButtons) {
+      let btn = document.createElement('button');
+      btn.className = 'btnAdopt';
+      btn.setAttribute('data-ref', uuid);
+      btn.innerHTML = '<span class="material-symbols-outlined">heart_plus</span> Adopt Now!';
+      p3.append(btn);
+    }
+    document.querySelector('main').append(div);
+  }
 }

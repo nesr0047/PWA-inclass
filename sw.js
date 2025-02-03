@@ -20,10 +20,41 @@ self.addEventListener('activate', (ev) => {
 }); //Homework
 self.addEventListener('fetch', (ev) => {});
 self.addEventListener('message', (ev) => {
-  if ('action' in ev.data && ev.data.action == 'adopt') {
-    adoptADog(ev.data.dog);
+  if ('action' in ev.data) {
+    if (ev.data.action == 'adopt') {
+      adoptADog(ev.data.dog);
+    }
+    if (ev.data.action == 'getAdoptedDogs') {
+      console.log('get the list of adopted dogs');
+      getListOfDogs(ev);
+    }
+    if (ev.data.action === 'goGetLunch') {
+    }
+    if (ev.data.action === 'sellTheDogs') {
+    }
   }
 });
+
+function getListOfDogs(ev) {
+  //SW will caches.open()
+  // cache.keys()
+  // cache.match(key) for each file (key) => response
+  // response.json() on each response
+  // send the resulting array of objects as a message to main.js
+  ev.waitUntil(
+    caches.open(adoptCache).then(async (cache) => {
+      let requests = await cache.keys();
+      let responses = await Promise.all(requests.map((req) => cache.match(req))); //cache.match for each filename
+      let dogs = await Promise.all(responses.map((resp) => resp.json())); // resp.json() for each response
+      let clientid = ev.source.id;
+      let msg = {
+        action: 'getAdoptedDogs',
+        dogs,
+      };
+      sendMessage(msg, clientid);
+    })
+  );
+}
 
 function adoptADog(dog) {
   let str = JSON.stringify(dog);
@@ -39,7 +70,7 @@ function adoptADog(dog) {
     })
     .then(() => {
       console.log('saved the adoption');
-      sendMessage({ message: 'Dog successfully adopted', filename: filename });
+      sendMessage({ action: 'adoptedSuccess', message: 'Dog successfully adopted', dog });
     });
 }
 

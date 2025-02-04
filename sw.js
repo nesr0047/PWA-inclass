@@ -1,4 +1,4 @@
-const version = 5;
+const version = 6;
 const appCache = 'appFiles_' + version;
 const imgCache = 'dogImages_' + version;
 const adoptCache = 'adoptedDogs_' + version;
@@ -167,7 +167,7 @@ self.addEventListener('fetch', (ev) => {
     url.pathname.includes('.jpeg') ||
     url.hostname.includes('picsum.photos'); //check file extension or location
 
-  let isAPI = url.hostname.includes('dog.ceo');
+  let isAPI = url.hostname.includes('dog.ceo') || url.hostname.includes('randomuser.me');
   let isAPIImage = url.hostname.includes('images.dog.ceo');
 
   let selfLocation = new URL(self.location);
@@ -175,10 +175,9 @@ self.addEventListener('fetch', (ev) => {
   let isRemote = selfLocation.origin !== url.origin;
   // http://127.0.0.1:5500 == origin
 
+  console.log({ online });
   if (online) {
     //online
-    // console.log({ isImage });
-    // console.log({ isAPIImage });
     if (isImage && isAPIImage) {
       ev.respondWith(fetchAndCache(ev, imgCache));
     } else if (isAPI) {
@@ -189,13 +188,11 @@ self.addEventListener('fetch', (ev) => {
     }
   } else {
     //offline
+    if (url.protocol.startsWith('ws')) {
+      ev.respondWith(new Response(null, { status: 404 }));
+    }
     ev.respondWith(cacheOnly(ev));
   }
-
-  // ev.waitUntil(promise)
-  // ev.waitUntil(promise)
-  // ev.waitUntil(promise)
-  // ev.respondWith(RESPONSE)
 });
 function fetchAndCache(ev, cacheName) {
   return fetch(ev.request).then(async (fetchResponse) => {

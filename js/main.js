@@ -129,7 +129,7 @@ function gotMessage(ev) {
       let dogs = ev.data.dogs;
       console.log('list of dogs');
       console.log(dogs);
-      buildCards(dogs);
+      buildCards(dogs, false);
       displayNumDogs(dogs.length); //NEW
     }
   }
@@ -137,6 +137,14 @@ function gotMessage(ev) {
 
 function displayNumDogs(numDogs) {
   //NEW - tell the user about how many dogs they have adopted
+  let main = document.querySelector('main');
+  let html = '';
+  if (numDogs < 5) {
+    html = `<h2>You REAALLLLYY NEED MORE DOGS. ${numDogs} is NOT enough!</h2>`;
+  } else {
+    html = `<h2>You only have ${numDogs}. Clearly you need to adopt more!</h2>`;
+  }
+  main.insertAdjacentHTML('beforebegin', html);
 }
 
 function sendMessage(msg) {

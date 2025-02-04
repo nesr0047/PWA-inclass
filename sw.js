@@ -1,4 +1,4 @@
-const version = 1;
+const version = 5;
 const appCache = 'appFiles_' + version;
 const imgCache = 'dogImages_' + version;
 const adoptCache = 'adoptedDogs_' + version;
@@ -18,7 +18,7 @@ self.addEventListener('activate', (ev) => {
     return Promise.all(cacheList.filter((cache) => ![appCache, imgCache, adoptCache].includes(cache)).map((cache) => caches.delete(cache)));
   });
 }); //Homework
-self.addEventListener('fetch', (ev) => {});
+
 self.addEventListener('message', (ev) => {
   if ('action' in ev.data) {
     if (ev.data.action == 'adopt') {
@@ -43,9 +43,17 @@ function getListOfDogs(ev) {
   // send the resulting array of objects as a message to main.js
   ev.waitUntil(
     caches.open(adoptCache).then(async (cache) => {
-      let requests = await cache.keys();
+      let requests = await cache.keys(); //get the list of json files in the cache
       let responses = await Promise.all(requests.map((req) => cache.match(req))); //cache.match for each filename
       let dogs = await Promise.all(responses.map((resp) => resp.json())); // resp.json() for each response
+
+      // [
+      //   {uuid:'', breed:'', src:'', name:''},
+      //   {uuid:'', breed:'', src:'', name:''},
+      //   {uuid:'', breed:'', src:'', name:''},
+      //   {uuid:'', breed:'', src:'', name:''},
+      // ]
+
       let clientid = ev.source.id;
       let msg = {
         action: 'getAdoptedDogs',
@@ -58,7 +66,7 @@ function getListOfDogs(ev) {
 
 function adoptADog(dog) {
   let str = JSON.stringify(dog);
-  let filename = crypto.randomUUID() + '.json';
+  let filename = dog.uuid + '.json';
   let file = new File([str], filename, { type: 'application/json' });
   let resp = new Response(file, { status: 200, headers: { 'content-type': 'application/json' } });
   let request = new Request(`/${filename}`);
@@ -66,7 +74,8 @@ function adoptADog(dog) {
   caches
     .open(adoptCache)
     .then((cache) => {
-      cache.put(request, resp);
+      return cache.put(request, resp);
+      //  return;
     })
     .then(() => {
       console.log('saved the adoption');
@@ -109,7 +118,7 @@ function networkFirst(ev) {
   });
 }
 
-function staleWhileRevalidate(ev) {
+function staleWhileRevalidate(ev, cacheName) {
   //return cache then fetch and save latest fetch
   return caches.match(ev.request).then((cacheResponse) => {
     let fetchResponse = fetch(ev.request).then((response) => {
@@ -132,5 +141,67 @@ function networkFirstAndRevalidate(ev) {
       cache.put(ev.request, response.clone());
       return response; //send the fetch response to the web page/script
     });
+  });
+}
+let isOnline = true;
+self.addEventListener('online', (ev) => {
+  isOnline = true;
+});
+self.addEventListener('offline', (ev) => {
+  isOnline = false;
+});
+self.addEventListener('fetch', (ev) => {
+  let mode = ev.request.mode; // navigate, cors, no-cors
+  let method = ev.request.method; //get the HTTP method
+  let url = new URL(ev.request.url); //turn the url string into a URL object
+  let params = url.searchParams; // params.has('id')  params.get('id') params.set('id')
+  // let queryString = new URLSearchParams(url.search); //turn query string into an Object
+  let online = navigator.onLine && isOnline; //determine if the browser is currently offline
+  let isImage =
+    url.pathname.includes('.png') ||
+    url.pathname.includes('.ico') ||
+    url.pathname.includes('.jpg') ||
+    url.pathname.includes('.svg') ||
+    url.pathname.includes('.gif') ||
+    url.pathname.includes('.webp') ||
+    url.pathname.includes('.jpeg') ||
+    url.hostname.includes('picsum.photos'); //check file extension or location
+
+  let isAPI = url.hostname.includes('dog.ceo');
+  let isAPIImage = url.hostname.includes('images.dog.ceo');
+
+  let selfLocation = new URL(self.location);
+  //determine if the requested file is from the same origin as your website
+  let isRemote = selfLocation.origin !== url.origin;
+  // http://127.0.0.1:5500 == origin
+
+  if (online) {
+    //online
+    // console.log({ isImage });
+    // console.log({ isAPIImage });
+    if (isImage && isAPIImage) {
+      ev.respondWith(fetchAndCache(ev, imgCache));
+    } else if (isAPI) {
+      //isAPIImage or not
+      ev.respondWith(fetchAndCache(ev, appCache));
+    } else {
+      ev.respondWith(staleWhileRevalidate(ev, appCache));
+    }
+  } else {
+    //offline
+    ev.respondWith(cacheOnly(ev));
+  }
+
+  // ev.waitUntil(promise)
+  // ev.waitUntil(promise)
+  // ev.waitUntil(promise)
+  // ev.respondWith(RESPONSE)
+});
+function fetchAndCache(ev, cacheName) {
+  return fetch(ev.request).then(async (fetchResponse) => {
+    await caches.open(cacheName).then((cache) => {
+      cache.put(ev.request, fetchResponse.clone());
+    });
+    return fetchResponse;
   });
 }

@@ -1,9 +1,22 @@
-const version = 6;
+const version = 7;
 const appCache = 'appFiles_' + version;
 const imgCache = 'dogImages_' + version;
 const adoptCache = 'adoptedDogs_' + version;
 
-const appFiles = ['/', '/index.html', '/adopt.html', '/css/main.css', '/js/main.js'];
+const appFiles = [
+  './',
+  './index.html',
+  './adopt.html',
+  './css/main.css',
+  './js/main.js',
+  './img/favicon.ico',
+  './img/favicon.svg',
+  './manifest.json',
+  './img/apple-touch-icon.png',
+  './img/favicon-96x96.png',
+  './img/web-app-manifest-192x192.png',
+  './img/web-app-manifest-512x512.png',
+];
 
 self.addEventListener('install', (ev) => {
   ev.waitUntil(
@@ -175,7 +188,7 @@ self.addEventListener('fetch', (ev) => {
   let isRemote = selfLocation.origin !== url.origin;
   // http://127.0.0.1:5500 == origin
 
-  console.log({ online });
+  // console.log({ online });
   if (online) {
     //online
     if (isImage && isAPIImage) {
